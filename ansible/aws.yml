@@ -1,0 +1,5 @@
+- name: Create an ec2 instance
+  hosts: localhost
+  gather_facts: False
+  roles:
+    - { role: ec2 }

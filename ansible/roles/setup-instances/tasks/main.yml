@@ -1,0 +1,37 @@
+- name: Check SSH known_hosts for {{ inventory_hostname }}
+  local_action: shell ssh-keygen -F {{ inventory_hostname }}
+  register: checkForKnownHostsEntry
+  failed_when: false
+  changed_when: false
+  ignore_errors: yes
+
+- name: Add "{{ inventory_hostname }}" to SSH known hosts automatically
+  when: checkForKnownHostsEntry.rc == 1
+  changed_when: checkForKnownHostsEntry.rc == 1
+  set_fact:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+- name: Update repositories cache and install docker
+  apt:
+    name: docker.io
+    update_cache: yes
+
+- name: Start docker service
+  systemd:
+    state: started
+    name: docker
+
+- name: enable docker service
+  systemd:
+    name: docker
+    enabled: yes
+    masked: no
+
+- name: Create a docker network
+  command: docker network create -d bridge "{{ docker_network_name }}"
+
+- name: start redis
+  command: docker run -itd --network="{{ docker_network_name }}" --name redis docker.io/redis:alpine
+
+- name: start flask-app
+  command: docker run -p 80:5000 -itd --network="{{ docker_network_name }}" --name flask nemie/flask-app:test

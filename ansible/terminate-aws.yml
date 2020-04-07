@@ -1,0 +1,30 @@
+- name: Terminate instances
+  hosts: localhost
+  tasks:
+  - name: Terminate instances that were previously launched
+    ec2:
+      state: 'absent'
+      region: "{{ region }}"
+      aws_access_key: "{{ aws_accesskey }}"
+      aws_secret_key: "{{ aws_secretkey }}"
+      instance_ids: '{{ item }}'
+    with_items:
+    - "{{ groups['ec2-instances'] }}"
+
+  - name: Remove the terminated EC2 instance(s)
+    lineinfile:
+      path: "{{ instancepath }}"
+      regexp: "^{{ item }}"
+      state: absent
+    with_items:
+    - "{{ groups['ec2-instances'] }}"
+
+  - name: Remove the terminated EC2 host(s)
+    lineinfile:
+      path: "{{ hostpath }}"
+      # regexp={{ item.public_ip }}
+      # insertafter="[ec2]"
+      regexp: '{{ item }}'
+      state: absent
+    with_items:
+    - "{{ groups['ec2'] }}"

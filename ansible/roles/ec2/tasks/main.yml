@@ -1,0 +1,51 @@
+- name: Create an EC2 key
+  ec2_key:
+    name: "{{ project_name }}-key"
+    region: "{{ region }}"
+    aws_access_key: "{{ aws_accesskey }}"
+    aws_secret_key: "{{ aws_secretkey }}"
+  register: ec2_key
+
+- name: Save private key
+  copy: content="{{ ec2_key.key.private_key }}" dest="{{ project_name }}-key.pem" mode=0600
+
+- name: Launch instance
+  ec2:
+    key_name: "{{ project_name }}-key"
+    instance_type: "{{ instance_type }}"
+    image: "{{ ami }}"
+    wait: true
+    aws_access_key: "{{ aws_accesskey }}"
+    aws_secret_key: "{{ aws_secretkey }}"
+    group: "{{ security_group }}"
+    instance_tags:
+      test: ansible
+    region: "{{ region }}"
+    vpc_subnet_id: subnet-668f9103
+    assign_public_ip: yes
+  register: ec2
+
+- name: Add the newly created EC2 host(s) to host group
+  lineinfile: dest={{ hostpath }}
+              regexp={{ item.public_ip }}
+              insertafter="[ec2]"
+              line="{{ item.public_ip }} {{varsstring}}"
+              state=present
+  loop: "{{ ec2.instances }}"
+
+- wait_for: path={{ hostpath }} search_regex={{varsstring}}
+
+- name: Add the newly created EC2 instance(s) to instances
+  lineinfile: dest={{ instancepath }}
+              regexp={{ item.id }}
+              insertafter="[ec2-instances]"
+              line="{{ item.id }}"
+              state=present
+  loop: "{{ ec2.instances }}"
+
+- name: Wait for SSH to come up
+  local_action: wait_for
+                host={{ item.public_ip }}
+                port=22
+                state=started
+  loop: "{{ ec2.instances }}"
