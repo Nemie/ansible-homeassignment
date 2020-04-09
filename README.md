@@ -69,17 +69,17 @@ Files for this app is under **REPO/dbapp** including **requirements.txt** and **
 * Create a development RDS Mysql instance and add your newly created **security_group** when setting it up ( for simplicity ).
 * Also add **inbound permission** in your `security_group` in AWS for port **3306** with your created hosts **private ip as source**.
 * Create DB and Table for user registration.
-
-`CREATE DATABASE IF NOT EXISTS `ansibletest` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+```
+CREATE DATABASE IF NOT EXISTS `ansibletest` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE `ansibletest`;
 
 CREATE TABLE IF NOT EXISTS `accounts` (
 	`id` int(11) NOT NULL AUTO_INCREMENT,
-  	`username` varchar(50) NOT NULL,
-  	`password` varchar(255) NOT NULL,
-    PRIMARY KEY (`id`)
-);`
-
+	`username` varchar(50) NOT NULL,
+	`password` varchar(255) NOT NULL,
+	PRIMARY KEY (`id`)
+);
+```
 * Manually created openssl keypair on the host for mysql backups:
 `openssl req -x509 -nodes -newkey rsa:2048 -keyout mysqldump-key.priv.pem -out mysqldump-key.pub.pem`
 
