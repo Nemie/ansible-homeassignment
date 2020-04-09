@@ -4,6 +4,7 @@
     region: "{{ region }}"
     aws_access_key: "{{ aws_accesskey }}"
     aws_secret_key: "{{ aws_secretkey }}"
+    force: false
   register: ec2_key
 
 - name: Save private key
@@ -21,7 +22,7 @@
     instance_tags:
       test: ansible
     region: "{{ region }}"
-    vpc_subnet_id: subnet-668f9103
+    vpc_subnet_id: "{{ vpc_subnet }}"
     assign_public_ip: yes
   register: ec2
 

@@ -29,9 +29,29 @@
 
 - name: Create a docker network
   command: docker network create -d bridge "{{ docker_network_name }}"
+  ignore_errors: yes
 
 - name: start redis
   command: docker run -itd --network="{{ docker_network_name }}" --name redis docker.io/redis:alpine
+  ignore_errors: yes
 
 - name: start flask-app
-  command: docker run -p 80:5000 -itd --network="{{ docker_network_name }}" --name flask nemie/flask-app:test
+  command: docker run -p 80:5000 -itd --network="{{ docker_network_name }}" -e mysql_pass={{ mysql_pass }} -e mysql_user={{ mysql_user }} -e mysql_host={{ mysql_host }} --name flask nemie/flask-app:db
+  ignore_errors: yes
+
+- name: copy dbdumb bash script
+  copy:
+    src: dbdump.sh
+    dest: /home/ubuntu/dbdump.sh
+    mode: 0744
+    owner: ubuntu
+    group: ubuntu
+    backup: yes
+
+- name: Setup cronjob to take mysqldumps
+  cron:
+    name: "db backups"
+    user: ubuntu
+    special_time: hourly
+    job: "/home/ubuntu/dbdump.sh"
+    state: present
